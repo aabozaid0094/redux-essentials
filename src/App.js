@@ -8,6 +8,7 @@ import {
 
 import { Navbar } from './app/Navbar'
 import { PostsList } from './features/posts/PostsList'
+import { AddPostForm } from './features/posts/AddPostForm'
 
 function App() {
   return (
@@ -19,7 +20,10 @@ function App() {
             exact
             path="/"
             render={() => (
-              <PostsList/>
+              <>
+                <AddPostForm />
+                <PostsList/>
+              </>
             )}
           />
           <Redirect to="/" />
