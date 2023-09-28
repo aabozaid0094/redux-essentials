@@ -1,12 +1,8 @@
-import { createSlice, nanoid, createAsyncThunk } from '@reduxjs/toolkit'
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { client } from '../../api/client'
-// import { sub } from 'date-fns'
 
 const initialState = {
-  items: [
-    // { id: '1', title: 'First Post!', content: 'Hello!', user: '', date: sub(new Date(), { minutes: 10 }).toISOString(), reactions: { thumbsUp: 0, hooray: 0, heart: 0, rocket: 0, eyes: 0 } },
-    // { id: '2', title: 'Second Post', content: 'More text', user: '', date: sub(new Date(), { minutes: 5 }).toISOString(), reactions: { thumbsUp: 0, hooray: 0, heart: 0, rocket: 0, eyes: 0 } }
-  ],
+  items: [],
   status: 'idle',
   error: null
 }
@@ -15,6 +11,17 @@ export const fetchPosts = createAsyncThunk('posts/fetchPosts', async () => {
   const response = await client.get('/fakeApi/posts')
   return response.data
 })
+
+export const addNewPost = createAsyncThunk(
+  'posts/addNewPost',
+  // The payload creator receives the partial `{title, content, user}` object
+  async initialPost => {
+    // We send the initial data to the fake API server
+    const response = await client.post('/fakeApi/posts', initialPost)
+    // The response includes the complete post object, including unique ID
+    return response.data
+  }
+)
 
 const postsSlice = createSlice({
   name: "posts",
@@ -25,23 +32,6 @@ const postsSlice = createSlice({
       const existingPost = state.items.find(post => post.id === postId)
       if (existingPost) {
         existingPost.reactions[reaction]++
-      }
-    },
-    postAdded: {
-      reducer(state, action) {
-        state.items.push(action.payload)
-      },
-      prepare(title, content, userId) {
-        return {
-          payload: {
-            id: nanoid(),
-            date: new Date().toISOString(),
-            reactions: { thumbsUp: 0, hooray: 0, heart: 0, rocket: 0, eyes: 0 },
-            title,
-            content,
-            user: userId
-          }
-        }
       }
     },
     postUpdated(state, action) {
@@ -68,6 +58,11 @@ const postsSlice = createSlice({
         state.status = 'failed'
         state.error = action.error.message
       })
+
+    builder.addCase(addNewPost.fulfilled, (state, action) => {
+      // We can directly add the new post object to our posts array
+      state.items.push(action.payload)
+    })
   }
 });
 
