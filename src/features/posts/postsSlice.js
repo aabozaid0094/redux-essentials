@@ -2,68 +2,68 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { client } from '../../api/client'
 
 const initialState = {
-  items: [],
-  status: 'idle',
-  error: null
+    items: [],
+    status: 'idle',
+    error: null
 }
 
 export const fetchPosts = createAsyncThunk('posts/fetchPosts', async () => {
-  const response = await client.get('/fakeApi/posts')
-  return response.data
+    const response = await client.get('/fakeApi/posts')
+    return response.data
 })
 
 export const addNewPost = createAsyncThunk(
-  'posts/addNewPost',
-  // The payload creator receives the partial `{title, content, user}` object
-  async initialPost => {
-    // We send the initial data to the fake API server
-    const response = await client.post('/fakeApi/posts', initialPost)
-    // The response includes the complete post object, including unique ID
-    return response.data
-  }
+    'posts/addNewPost',
+    // The payload creator receives the partial `{title, content, user}` object
+    async initialPost => {
+        // We send the initial data to the fake API server
+        const response = await client.post('/fakeApi/posts', initialPost)
+        // The response includes the complete post object, including unique ID
+        return response.data
+    }
 )
 
 const postsSlice = createSlice({
-  name: "posts",
-  initialState,
-  reducers: {
-    reactionAdded(state, action) {
-      const { postId, reaction } = action.payload
-      const existingPost = state.items.find(post => post.id === postId)
-      if (existingPost) {
-        existingPost.reactions[reaction]++
-      }
+    name: "posts",
+    initialState,
+    reducers: {
+        reactionAdded(state, action) {
+            const { postId, reaction } = action.payload
+            const existingPost = state.items.find(post => post.id === postId)
+            if (existingPost) {
+                existingPost.reactions[reaction]++
+            }
+        },
+        postUpdated(state, action) {
+            const { id, title, content, userId } = action.payload
+            const existingPost = state.items.find(post => post.id === id)
+            if (existingPost) {
+                existingPost.title = title
+                existingPost.content = content
+                existingPost.user = userId
+            }
+        }
     },
-    postUpdated(state, action) {
-      const { id, title, content, userId } = action.payload
-      const existingPost = state.items.find(post => post.id === id)
-      if (existingPost) {
-        existingPost.title = title
-        existingPost.content = content
-        existingPost.user = userId
-      }
-    }
-  },
-  extraReducers: builder => {
-    builder
-      .addCase(fetchPosts.pending, (state, action) => {
-        state.status = 'loading'
-      })
-      .addCase(fetchPosts.fulfilled, (state, action) => {
-        state.status = 'succeeded'
-        // Add any fetched posts to the array
-        state.items = state.items.concat(action.payload)
-      })
-      .addCase(fetchPosts.rejected, (state, action) => {
-        state.status = 'failed'
-        state.error = action.error.message
-      })
+    extraReducers: builder => {
+        builder
+            .addCase(fetchPosts.pending, (state, action) => {
+                state.status = 'loading'
+            })
+            .addCase(fetchPosts.fulfilled, (state, action) => {
+                state.status = 'succeeded'
+                // Add any fetched posts to the array
+                state.items = state.items.concat(action.payload)
+            })
+            .addCase(fetchPosts.rejected, (state, action) => {
+                state.status = 'failed'
+                state.error = action.error.message
+            })
 
-    builder.addCase(addNewPost.fulfilled, (state, action) => {
-      // We can directly add the new post object to our posts array
-      state.items.push(action.payload)
-    })
-  }
+        builder.addCase(addNewPost.fulfilled, (state, action) => {
+            // We can directly add the new post object to our posts array
+            state.items.push(action.payload)
+        })
+    }
 });
 
 export const { postAdded, postUpdated, reactionAdded } = postsSlice.actions
